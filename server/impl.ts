@@ -12,6 +12,7 @@ import {
   IJoinGameRequest,
   ISetDirectionRequest,
 } from "../api/types";
+import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../shared/common";
 
 const GRAVITY = 200;
 const PLAYER_SPEED = 200;
@@ -34,19 +35,18 @@ export class Impl implements Methods<InternalState> {
       sys: {
         game: { config: {} },
         settings: { physics: { gravity: { y: GRAVITY } } },
-        scale: { width: 800, height: 600 },
+        scale: { width: GAME_WIDTH, height: GAME_HEIGHT },
       },
     });
     return {
       physics,
       players: [],
-      platforms: [
-        physics.add.body(40, 530, 288, 16).setAllowGravity(false).setImmovable(true),
-        physics.add.body(340, 440, 192, 16).setAllowGravity(false).setImmovable(true),
-        physics.add.body(140, 350, 192, 16).setAllowGravity(false).setImmovable(true),
-        physics.add.body(360, 270, 288, 16).setAllowGravity(false).setImmovable(true),
-        physics.add.body(704, 200, 96, 16).setAllowGravity(false).setImmovable(true),
-      ],
+      platforms: PLATFORMS.map((platform) => {
+        return physics.add
+          .body(platform.x, platform.y, platform.width, platform.height)
+          .setAllowGravity(false)
+          .setImmovable(true);
+      }),
     };
   }
   joinGame(state: InternalState, userId: UserId, ctx: Context, request: IJoinGameRequest): Response {

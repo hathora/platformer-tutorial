@@ -3,6 +3,7 @@ import { InterpolationBuffer } from "interpolation-buffer";
 
 import { HathoraClient, HathoraConnection, StateId } from "../../.hathora/client";
 import { GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
+import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../../../shared/common";
 
 const client = new HathoraClient();
 
@@ -45,11 +46,9 @@ export class GameScene extends Phaser.Scene {
     this.add.tileSprite(0, 0, this.scale.width, this.scale.height, "background").setOrigin(0, 0);
 
     // platforms
-    this.add.tileSprite(40, 530, 288, 16, "platform").setOrigin(0, 0);
-    this.add.tileSprite(340, 440, 192, 16, "platform").setOrigin(0, 0);
-    this.add.tileSprite(140, 350, 192, 16, "platform").setOrigin(0, 0);
-    this.add.tileSprite(360, 270, 288, 16, "platform").setOrigin(0, 0);
-    this.add.tileSprite(704, 200, 96, 16, "platform").setOrigin(0, 0);
+    PLATFORMS.forEach((platform) => {
+      this.add.tileSprite(platform.x, platform.y, platform.width, platform.height, "platform").setOrigin(0, 0);
+    });
 
     // animations
     this.anims.create({
@@ -171,8 +170,8 @@ function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
 
 new Phaser.Game({
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: GAME_WIDTH,
+  height: GAME_HEIGHT,
   scene: [GameScene],
   parent: "phaser-container",
 });

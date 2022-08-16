@@ -1,0 +1,7 @@
+{
+  "name": "platformer-tutorial-shared",
+  "type": "module",
+  "devDependencies": {
+    "typescript": "^4.3.4"
+  }
+}
