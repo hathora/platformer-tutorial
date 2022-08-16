@@ -21,7 +21,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   create() {
-    this.add.tileSprite(0, 0, 800, 600, "background").setOrigin(0, 0);
+    this.add.tileSprite(0, 0, this.scale.width, this.scale.height, "background").setOrigin(0, 0);
+
+    this.add.tileSprite(40, 530, 288, 16, "platform_long").setOrigin(0, 0);
+    this.add.tileSprite(340, 440, 192, 16, "platform_long").setOrigin(0, 0);
+    this.add.tileSprite(140, 350, 192, 16, "platform_long").setOrigin(0, 0);
+    this.add.tileSprite(360, 270, 288, 16, "platform_long").setOrigin(0, 0);
+    this.add.tileSprite(704, 200, 96, 16, "platform_long").setOrigin(0, 0);
 
     this.anims.create({
       key: "idle",
@@ -49,8 +55,14 @@ export class GameScene extends Phaser.Scene {
           .connect(
             token,
             stateId,
-            (args) => this._onUpdate(args),
-            (err) => this._onError(err)
+            ({ state, updatedAt }) => {
+              if (this.stateBuffer === undefined) {
+                this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
+              } else {
+                this.stateBuffer.enqueue(state, [], updatedAt);
+              }
+            },
+            (err) => console.error("Error occured", err.message)
           )
           .then((connection) => {
             connection.joinGame({});
@@ -125,19 +137,6 @@ export class GameScene extends Phaser.Scene {
 
     sprite.x = x;
     sprite.y = y;
-  }
-
-  private _onUpdate({ state, updatedAt }: UpdateArgs) {
-    if (this.stateBuffer === undefined) {
-      this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
-    } else {
-      this.stateBuffer.enqueue(state, [], updatedAt);
-    }
-    console.log("state update", state);
-  }
-
-  private _onError(error: ConnectionFailure) {
-    console.error("Error occured", error.message);
   }
 }
 

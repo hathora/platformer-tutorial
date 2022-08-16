@@ -22,30 +22,44 @@ type InternalPlayer = {
 type InternalState = {
   physics: ArcadePhysics;
   players: InternalPlayer[];
+  platforms: Body[];
 };
 
 export class Impl implements Methods<InternalState> {
   initialize(ctx: Context, request: IInitializeRequest): InternalState {
+    const physics = new ArcadePhysics({
+      sys: {
+        game: { config: {} },
+        settings: { physics: { gravity: { y: 200 } } },
+        scale: { width: 800, height: 600 },
+      },
+    });
     return {
-      physics: new ArcadePhysics({
-        sys: {
-          game: { config: {} },
-          settings: { physics: { gravity: { y: 200 } } },
-          scale: { width: 800, height: 600 },
-        },
-      }),
+      physics,
       players: [],
+      platforms: [
+        physics.add.body(40, 530, 288, 16).setAllowGravity(false).setImmovable(true),
+        physics.add.body(340, 440, 192, 16).setAllowGravity(false).setImmovable(true),
+        physics.add.body(140, 350, 192, 16).setAllowGravity(false).setImmovable(true),
+        physics.add.body(360, 270, 288, 16).setAllowGravity(false).setImmovable(true),
+        physics.add.body(704, 200, 96, 16).setAllowGravity(false).setImmovable(true),
+      ],
     };
   }
   joinGame(state: InternalState, userId: UserId, ctx: Context, request: IJoinGameRequest): Response {
     if (state.players.some((player) => player.id === userId)) {
       return Response.error("Already joined");
     }
+
+    // create player
     const playerBody = state.physics.add.body(0, 0, 32, 32);
     playerBody.pushable = false;
-    // @ts-ignore
-    playerBody.setCollideWorldBounds(true);
+    playerBody.setCollideWorldBounds(true, undefined, undefined, undefined);
+
+    // set up colliders
     state.players.forEach((player) => state.physics.add.collider(playerBody, player.body));
+    state.platforms.forEach((platformBody) => state.physics.add.collider(playerBody, platformBody));
+
     state.players.push({
       id: userId,
       body: playerBody,
