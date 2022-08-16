@@ -1,0 +1,29 @@
+types:
+  XDirection:
+    - NONE
+    - LEFT
+    - RIGHT
+  YDirection:
+    - NONE
+    - UP
+    - DOWN
+  Player:
+    id: UserId
+    x: float
+    y: float
+    xDirection: XDirection
+    yDirection: YDirection
+  GameState:
+    players: Player[]
+
+methods:
+  joinGame:
+  setDirection:
+    horizontal: XDirection
+    vertical: YDirection
+
+auth:
+  anonymous: {}
+
+userState: GameState
+error: string
