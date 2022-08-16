@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 
-import { HathoraClient, HathoraConnection } from "../../.hathora/client";
+import { HathoraClient, HathoraConnection, StateId } from "../../.hathora/client";
 import { GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
 
 const client = new HathoraClient();
@@ -23,7 +23,7 @@ export class GameScene extends Phaser.Scene {
 
   init() {
     getToken().then(async (token) => {
-      const stateId = await client.create(token, {});
+      const stateId = await getStateId(token);
       this.connection = await client.connect(
         token,
         stateId,
@@ -146,6 +146,16 @@ async function getToken(): Promise<string> {
   const token = await client.loginAnonymous();
   sessionStorage.setItem(client.appId, token);
   return token;
+}
+
+async function getStateId(token: string): Promise<StateId> {
+  if (location.pathname.length > 1) {
+    return location.pathname.split("/").pop()!;
+  } else {
+    const stateId = await client.create(token, {});
+    history.pushState({}, "", `/${stateId}`);
+    return stateId;
+  }
 }
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
