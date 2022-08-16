@@ -16,6 +16,8 @@ import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../shared/common";
 
 const GRAVITY = 200;
 const PLAYER_SPEED = 200;
+const PLAYER_WIDTH = 32;
+const PLAYER_HEIGHT = 32;
 
 type InternalPlayer = {
   id: UserId;
@@ -54,12 +56,12 @@ export class Impl implements Methods<InternalState> {
       return Response.error("Already joined");
     }
 
-    // create player
-    const playerBody = state.physics.add.body(0, 0, 32, 32);
-    playerBody.pushable = false;
+    // spawn player at (0, 0)
+    const playerBody = state.physics.add.body(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT);
     playerBody.setCollideWorldBounds(true, undefined, undefined, undefined);
+    playerBody.pushable = false;
 
-    // set up colliders
+    // set up colliders with other players and platforms
     state.players.forEach((player) => state.physics.add.collider(playerBody, player.body));
     state.platforms.forEach((platformBody) => state.physics.add.collider(playerBody, platformBody));
 
