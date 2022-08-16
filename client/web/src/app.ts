@@ -4,6 +4,8 @@ import { InterpolationBuffer } from "interpolation-buffer";
 import { HathoraClient, HathoraConnection } from "../../.hathora/client";
 import { GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
 
+const client = new HathoraClient();
+
 export class GameScene extends Phaser.Scene {
   private connection!: HathoraConnection;
   private stateBuffer: InterpolationBuffer<GameState> | undefined;
@@ -20,27 +22,21 @@ export class GameScene extends Phaser.Scene {
   }
 
   init() {
-    const client = new HathoraClient();
-    client.loginAnonymous().then((token) => {
-      client.create(token, {}).then((stateId) => {
-        client
-          .connect(
-            token,
-            stateId,
-            ({ state, updatedAt }) => {
-              if (this.stateBuffer === undefined) {
-                this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
-              } else {
-                this.stateBuffer.enqueue(state, [], updatedAt);
-              }
-            },
-            (err) => console.error("Error occured", err.message)
-          )
-          .then((connection) => {
-            this.connection = connection;
-            connection.joinGame({});
-          });
-      });
+    getToken().then(async (token) => {
+      const stateId = await client.create(token, {});
+      this.connection = await client.connect(
+        token,
+        stateId,
+        ({ state, updatedAt }) => {
+          if (this.stateBuffer === undefined) {
+            this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
+          } else {
+            this.stateBuffer.enqueue(state, [], updatedAt);
+          }
+        },
+        (err) => console.error("Error occured", err.message)
+      );
+      this.connection.joinGame({});
     });
   }
 
@@ -140,6 +136,16 @@ export class GameScene extends Phaser.Scene {
     sprite.x = x;
     sprite.y = y;
   }
+}
+
+async function getToken(): Promise<string> {
+  const storedToken = sessionStorage.getItem(client.appId);
+  if (storedToken !== null) {
+    return storedToken;
+  }
+  const token = await client.loginAnonymous();
+  sessionStorage.setItem(client.appId, token);
+  return token;
 }
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
