@@ -12,7 +12,8 @@ Try it at https://platformer-tutorial.surge.sh/
 
 ### Instructions:
 
-Arrow keys to move
+- Arrow keys to move
+- Join the same game instance by copying the url
 
 <img width="795" alt="image" src="https://user-images.githubusercontent.com/5400947/184981714-264f9889-f86b-4ac8-b645-473cd5c0608d.png">
 
