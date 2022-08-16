@@ -27,3 +27,4 @@ auth:
 
 userState: GameState
 error: string
+tick: 50
