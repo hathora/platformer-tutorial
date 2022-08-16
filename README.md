@@ -2,7 +2,7 @@
 
 ### Overview
 
-Built using https://github.com/hathora/hathora
+Built using [Hathora](https://github.com/hathora/hathora) and [Phaser](http://phaser.io/)
 
 Step-by-step tutorial on how to build this game: https://docs.hathora.dev/#/tutorial_platformer
 
