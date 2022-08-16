@@ -79,7 +79,7 @@ export class GameScene extends Phaser.Scene {
     const handleKeyEvt = () => {
       const inputs = {
         horizontal: keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE,
-        vertical: keys.up.isDown ? YDirection.UP : keys.down.isDown ? YDirection.DOWN : YDirection.NONE,
+        vertical: keys.up.isDown ? YDirection.UP : YDirection.NONE,
       };
       if (JSON.stringify(inputs) !== JSON.stringify(prevInputs)) {
         this.connection.setDirection(inputs);

@@ -13,6 +13,9 @@ import {
   ISetDirectionRequest,
 } from "../api/types";
 
+const GRAVITY = 200;
+const PLAYER_SPEED = 200;
+
 type InternalPlayer = {
   id: UserId;
   body: Body;
@@ -30,7 +33,7 @@ export class Impl implements Methods<InternalState> {
     const physics = new ArcadePhysics({
       sys: {
         game: { config: {} },
-        settings: { physics: { gravity: { y: 200 } } },
+        settings: { physics: { gravity: { y: GRAVITY } } },
         scale: { width: 800, height: 600 },
       },
     });
@@ -80,8 +83,7 @@ export class Impl implements Methods<InternalState> {
   getUserState(state: InternalState, userId: UserId): GameState {
     return {
       players: state.players.map((player) => {
-        const xVelocity = player.body.velocity.x;
-        const yVelocity = player.body.velocity.y;
+        const [xVelocity, yVelocity] = [player.body.velocity.x, player.body.velocity.y];
         return {
           id: player.id,
           x: player.body.x,
@@ -95,19 +97,16 @@ export class Impl implements Methods<InternalState> {
   onTick(state: InternalState, ctx: Context, timeDelta: number): void {
     state.players.forEach((player) => {
       if (player.xDirection === XDirection.LEFT && !player.body.blocked.left) {
-        player.body.setVelocityX(-200);
+        player.body.setVelocityX(-PLAYER_SPEED);
       } else if (player.xDirection === XDirection.RIGHT && !player.body.blocked.right) {
-        player.body.setVelocityX(200);
+        player.body.setVelocityX(PLAYER_SPEED);
       } else if (player.xDirection === XDirection.NONE) {
         player.body.setVelocityX(0);
       }
       if (player.yDirection === YDirection.UP && player.body.blocked.down) {
-        player.body.setVelocityY(-200);
-      } else if (player.yDirection === YDirection.DOWN && !player.body.blocked.down) {
-        player.body.setVelocityY(150);
+        player.body.setVelocityY(-GRAVITY);
       }
     });
-
     if (!state.players.every(({ body }) => body.velocity.x === 0 && body.velocity.y === 0 && body.blocked.down)) {
       state.physics.world.update(ctx.time, timeDelta * 1000);
     }
