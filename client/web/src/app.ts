@@ -1,11 +1,11 @@
 import Phaser from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 
-import { HathoraClient, UpdateArgs } from "../../.hathora/client";
-import { ConnectionFailure } from "../../.hathora/failures";
+import { HathoraClient, HathoraConnection } from "../../.hathora/client";
 import { GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
 
 export class GameScene extends Phaser.Scene {
+  private connection!: HathoraConnection;
   private stateBuffer: InterpolationBuffer<GameState> | undefined;
   private players: Map<UserId, Phaser.GameObjects.Sprite> = new Map();
 
@@ -15,20 +15,47 @@ export class GameScene extends Phaser.Scene {
 
   preload() {
     this.load.image("background", "background.png");
-    this.load.image("platform_long", "platform_long.png");
-    this.load.image("platform_short", "platform_short.png");
+    this.load.image("platform", "platform.png");
     this.load.spritesheet("player", "player.png", { frameWidth: 32, frameHeight: 32 });
   }
 
+  init() {
+    const client = new HathoraClient();
+    client.loginAnonymous().then((token) => {
+      client.create(token, {}).then((stateId) => {
+        client
+          .connect(
+            token,
+            stateId,
+            ({ state, updatedAt }) => {
+              if (this.stateBuffer === undefined) {
+                this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
+              } else {
+                this.stateBuffer.enqueue(state, [], updatedAt);
+              }
+            },
+            (err) => console.error("Error occured", err.message)
+          )
+          .then((connection) => {
+            this.connection = connection;
+            connection.joinGame({});
+          });
+      });
+    });
+  }
+
   create() {
+    // background
     this.add.tileSprite(0, 0, this.scale.width, this.scale.height, "background").setOrigin(0, 0);
 
-    this.add.tileSprite(40, 530, 288, 16, "platform_long").setOrigin(0, 0);
-    this.add.tileSprite(340, 440, 192, 16, "platform_long").setOrigin(0, 0);
-    this.add.tileSprite(140, 350, 192, 16, "platform_long").setOrigin(0, 0);
-    this.add.tileSprite(360, 270, 288, 16, "platform_long").setOrigin(0, 0);
-    this.add.tileSprite(704, 200, 96, 16, "platform_long").setOrigin(0, 0);
+    // platforms
+    this.add.tileSprite(40, 530, 288, 16, "platform").setOrigin(0, 0);
+    this.add.tileSprite(340, 440, 192, 16, "platform").setOrigin(0, 0);
+    this.add.tileSprite(140, 350, 192, 16, "platform").setOrigin(0, 0);
+    this.add.tileSprite(360, 270, 288, 16, "platform").setOrigin(0, 0);
+    this.add.tileSprite(704, 200, 96, 16, "platform").setOrigin(0, 0);
 
+    // animations
     this.anims.create({
       key: "idle",
       frames: this.anims.generateFrameNumbers("player", { start: 0, end: 10 }),
@@ -47,47 +74,24 @@ export class GameScene extends Phaser.Scene {
       frames: [{ key: "player", frame: 24 }],
     });
 
-    const client = new HathoraClient();
-
-    client.loginAnonymous().then((token) => {
-      client.create(token, {}).then((stateId) => {
-        client
-          .connect(
-            token,
-            stateId,
-            ({ state, updatedAt }) => {
-              if (this.stateBuffer === undefined) {
-                this.stateBuffer = new InterpolationBuffer(state, 50, lerp);
-              } else {
-                this.stateBuffer.enqueue(state, [], updatedAt);
-              }
-            },
-            (err) => console.error("Error occured", err.message)
-          )
-          .then((connection) => {
-            connection.joinGame({});
-
-            const keys = this.input.keyboard.createCursorKeys();
-            let prevInputs: { horizontal: XDirection; vertical: YDirection } = {
-              horizontal: XDirection.NONE,
-              vertical: YDirection.NONE,
-            };
-            function handleKeyEvt() {
-              const inputs = {
-                horizontal: keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE,
-                vertical: keys.up.isDown ? YDirection.UP : keys.down.isDown ? YDirection.DOWN : YDirection.NONE,
-              };
-              if (JSON.stringify(inputs) !== JSON.stringify(prevInputs)) {
-                connection.setDirection(inputs);
-                prevInputs = inputs;
-              }
-            }
-
-            this.input.keyboard.on("keydown", handleKeyEvt);
-            this.input.keyboard.on("keyup", handleKeyEvt);
-          });
-      });
-    });
+    // input handling
+    const keys = this.input.keyboard.createCursorKeys();
+    let prevInputs: { horizontal: XDirection; vertical: YDirection } = {
+      horizontal: XDirection.NONE,
+      vertical: YDirection.NONE,
+    };
+    const handleKeyEvt = () => {
+      const inputs = {
+        horizontal: keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE,
+        vertical: keys.up.isDown ? YDirection.UP : keys.down.isDown ? YDirection.DOWN : YDirection.NONE,
+      };
+      if (JSON.stringify(inputs) !== JSON.stringify(prevInputs)) {
+        this.connection.setDirection(inputs);
+        prevInputs = inputs;
+      }
+    };
+    this.input.keyboard.on("keydown", handleKeyEvt);
+    this.input.keyboard.on("keyup", handleKeyEvt);
   }
 
   update() {
@@ -129,9 +133,7 @@ export class GameScene extends Phaser.Scene {
       sprite.anims.play("jump", true);
     } else if (yDirection === YDirection.DOWN) {
       sprite.anims.play("fall", true);
-    }
-
-    if (xDirection === XDirection.NONE && yDirection === YDirection.NONE) {
+    } else if (xDirection === XDirection.NONE) {
       sprite.anims.play("idle", true);
     }
 
