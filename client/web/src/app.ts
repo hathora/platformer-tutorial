@@ -36,7 +36,7 @@ export class GameScene extends Phaser.Scene {
         },
         (err) => console.error("Error occured", err.message)
       );
-      this.connection.joinGame({});
+      await this.connection.joinGame({});
     });
   }
 
@@ -107,8 +107,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private addPlayer({ id, x, y }: Player) {
-    const sprite = new Phaser.GameObjects.Sprite(this, x, y, "player").setOrigin(0, 0);
-    this.add.existing(sprite);
+    const sprite = this.add.sprite(x, y, "player").setOrigin(0, 0);
     this.players.set(id, sprite);
   }
 
@@ -116,21 +115,16 @@ export class GameScene extends Phaser.Scene {
     const sprite = this.players.get(id)!;
 
     if (xDirection === XDirection.LEFT) {
-      sprite.setFlipX(true);
-      sprite.anims.play("walk", true);
+      sprite.setFlipX(true).anims.play("walk", true);
     } else if (xDirection === XDirection.RIGHT) {
-      sprite.setFlipX(false);
-      sprite.anims.play("walk", true);
-    } else {
-      // do nothing
+      sprite.setFlipX(false).anims.play("walk", true);
+    } else if (yDirection === YDirection.NONE) {
+      sprite.anims.play("idle", true);
     }
-
     if (yDirection === YDirection.UP) {
       sprite.anims.play("jump", true);
     } else if (yDirection === YDirection.DOWN) {
       sprite.anims.play("fall", true);
-    } else if (xDirection === XDirection.NONE) {
-      sprite.anims.play("idle", true);
     }
 
     sprite.x = x;
@@ -169,9 +163,7 @@ function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
 
 function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
   return {
-    id: to.id,
-    xDirection: to.xDirection,
-    yDirection: to.yDirection,
+    ...to,
     x: from.x + (to.x - from.x) * pctElapsed,
     y: from.y + (to.y - from.y) * pctElapsed,
   };
