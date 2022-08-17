@@ -3,15 +3,7 @@ import { Body } from "arcade-physics/lib/physics/arcade/Body";
 
 import { Methods, Context } from "./.hathora/methods";
 import { Response } from "../api/base";
-import {
-  XDirection,
-  YDirection,
-  GameState,
-  UserId,
-  IInitializeRequest,
-  IJoinGameRequest,
-  ISetDirectionRequest,
-} from "../api/types";
+import { XDirection, YDirection, GameState, UserId, ISetDirectionRequest } from "../api/types";
 import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../shared/common";
 
 const GRAVITY = 200;
@@ -22,8 +14,7 @@ const PLAYER_HEIGHT = 32;
 type InternalPlayer = {
   id: UserId;
   body: Body;
-  xDirection: XDirection;
-  yDirection: YDirection;
+  direction: { horizontal: number; vertical: number };
 };
 type InternalState = {
   physics: ArcadePhysics;
@@ -32,7 +23,7 @@ type InternalState = {
 };
 
 export class Impl implements Methods<InternalState> {
-  initialize(ctx: Context, request: IInitializeRequest): InternalState {
+  initialize(): InternalState {
     const physics = new ArcadePhysics({
       sys: {
         game: { config: {} },
@@ -51,7 +42,7 @@ export class Impl implements Methods<InternalState> {
       }),
     };
   }
-  joinGame(state: InternalState, userId: UserId, ctx: Context, request: IJoinGameRequest): Response {
+  joinGame(state: InternalState, userId: UserId): Response {
     if (state.players.some((player) => player.id === userId)) {
       return Response.error("Already joined");
     }
@@ -60,17 +51,15 @@ export class Impl implements Methods<InternalState> {
     const playerBody = state.physics.add.body(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT);
     playerBody.setCollideWorldBounds(true, undefined, undefined, undefined);
     playerBody.pushable = false;
+    state.players.push({
+      id: userId,
+      body: playerBody,
+      direction: { horizontal: XDirection.NONE, vertical: YDirection.NONE },
+    });
 
     // set up colliders with other players and platforms
     state.players.forEach((player) => state.physics.add.collider(playerBody, player.body));
     state.platforms.forEach((platformBody) => state.physics.add.collider(playerBody, platformBody));
-
-    state.players.push({
-      id: userId,
-      body: playerBody,
-      xDirection: XDirection.NONE,
-      yDirection: YDirection.NONE,
-    });
     return Response.ok();
   }
   setDirection(state: InternalState, userId: UserId, ctx: Context, request: ISetDirectionRequest): Response {
@@ -78,8 +67,7 @@ export class Impl implements Methods<InternalState> {
     if (player === undefined) {
       return Response.error("Not joined");
     }
-    player.xDirection = request.horizontal;
-    player.yDirection = request.vertical;
+    player.direction = request;
     return Response.ok();
   }
   getUserState(state: InternalState, userId: UserId): GameState {
@@ -98,14 +86,14 @@ export class Impl implements Methods<InternalState> {
   }
   onTick(state: InternalState, ctx: Context, timeDelta: number): void {
     state.players.forEach((player) => {
-      if (player.xDirection === XDirection.LEFT && !player.body.blocked.left) {
+      if (player.direction.horizontal === XDirection.LEFT && !player.body.blocked.left) {
         player.body.setVelocityX(-PLAYER_SPEED);
-      } else if (player.xDirection === XDirection.RIGHT && !player.body.blocked.right) {
+      } else if (player.direction.horizontal === XDirection.RIGHT && !player.body.blocked.right) {
         player.body.setVelocityX(PLAYER_SPEED);
-      } else if (player.xDirection === XDirection.NONE) {
+      } else if (player.direction.horizontal === XDirection.NONE) {
         player.body.setVelocityX(0);
       }
-      if (player.yDirection === YDirection.UP && player.body.blocked.down) {
+      if (player.direction.vertical === YDirection.UP && player.body.blocked.down) {
         player.body.setVelocityY(-GRAVITY);
       }
     });
