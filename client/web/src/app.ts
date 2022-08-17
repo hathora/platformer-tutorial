@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { InterpolationBuffer } from "interpolation-buffer";
 
 import { HathoraClient, HathoraConnection, StateId } from "../../.hathora/client";
-import { GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
+import { Direction, GameState, Player, UserId, XDirection, YDirection } from "../../../api/types";
 import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../../../shared/common";
 
 const client = new HathoraClient();
@@ -71,17 +71,14 @@ export class GameScene extends Phaser.Scene {
 
     // input handling
     const keys = this.input.keyboard.createCursorKeys();
-    let prevInputs: { horizontal: XDirection; vertical: YDirection } = {
-      horizontal: XDirection.NONE,
-      vertical: YDirection.NONE,
-    };
+    let prevInputs = Direction.default();
     const handleKeyEvt = () => {
-      const inputs = {
+      const inputs: Direction = {
         horizontal: keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE,
         vertical: keys.up.isDown ? YDirection.UP : YDirection.NONE,
       };
       if (JSON.stringify(inputs) !== JSON.stringify(prevInputs)) {
-        this.connection.setDirection(inputs);
+        this.connection.setDirection({ direction: inputs });
         prevInputs = inputs;
       }
     };
@@ -105,29 +102,29 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  private addPlayer({ id, x, y }: Player) {
-    const sprite = this.add.sprite(x, y, "player").setOrigin(0, 0);
+  private addPlayer({ id, position }: Player) {
+    const sprite = this.add.sprite(position.x, position.y, "player").setOrigin(0, 0);
     this.players.set(id, sprite);
   }
 
-  private updatePlayer({ id, x, y, xDirection, yDirection }: Player) {
+  private updatePlayer({ id, position, direction }: Player) {
     const sprite = this.players.get(id)!;
 
-    if (xDirection === XDirection.LEFT) {
+    if (direction.horizontal === XDirection.LEFT) {
       sprite.setFlipX(true).anims.play("walk", true);
-    } else if (xDirection === XDirection.RIGHT) {
+    } else if (direction.horizontal === XDirection.RIGHT) {
       sprite.setFlipX(false).anims.play("walk", true);
-    } else if (yDirection === YDirection.NONE) {
+    } else if (direction.vertical === YDirection.NONE) {
       sprite.anims.play("idle", true);
     }
-    if (yDirection === YDirection.UP) {
+    if (direction.vertical === YDirection.UP) {
       sprite.anims.play("jump", true);
-    } else if (yDirection === YDirection.DOWN) {
+    } else if (direction.vertical === YDirection.DOWN) {
       sprite.anims.play("fall", true);
     }
 
-    sprite.x = x;
-    sprite.y = y;
+    sprite.x = position.x;
+    sprite.y = position.y;
   }
 }
 
@@ -144,11 +141,10 @@ async function getToken(): Promise<string> {
 async function getStateId(token: string): Promise<StateId> {
   if (location.pathname.length > 1) {
     return location.pathname.split("/").pop()!;
-  } else {
-    const stateId = await client.create(token, {});
-    history.pushState({}, "", `/${stateId}`);
-    return stateId;
   }
+  const stateId = await client.create(token, {});
+  history.pushState({}, "", `/${stateId}`);
+  return stateId;
 }
 
 function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
@@ -163,8 +159,10 @@ function lerp(from: GameState, to: GameState, pctElapsed: number): GameState {
 function lerpPlayer(from: Player, to: Player, pctElapsed: number): Player {
   return {
     ...to,
-    x: from.x + (to.x - from.x) * pctElapsed,
-    y: from.y + (to.y - from.y) * pctElapsed,
+    position: {
+      x: from.position.x + (to.position.x - from.position.x) * pctElapsed,
+      y: from.position.y + (to.position.y - from.position.y) * pctElapsed,
+    },
   };
 }
 

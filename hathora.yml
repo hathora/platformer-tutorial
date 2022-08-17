@@ -7,20 +7,23 @@ types:
     - NONE
     - UP
     - DOWN
-  Player:
-    id: UserId
+  Position:
     x: float
     y: float
-    xDirection: XDirection
-    yDirection: YDirection
+  Direction:
+    horizontal: XDirection
+    vertical: YDirection
+  Player:
+    id: UserId
+    position: Position
+    direction: Direction
   GameState:
     players: Player[]
 
 methods:
   joinGame:
   setDirection:
-    horizontal: XDirection
-    vertical: YDirection
+    direction: Direction
 
 auth:
   anonymous: {}

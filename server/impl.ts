@@ -3,7 +3,7 @@ import { Body } from "arcade-physics/lib/physics/arcade/Body";
 
 import { Methods, Context } from "./.hathora/methods";
 import { Response } from "../api/base";
-import { XDirection, YDirection, GameState, UserId, ISetDirectionRequest } from "../api/types";
+import { XDirection, YDirection, GameState, UserId, ISetDirectionRequest, Direction } from "../api/types";
 import { GAME_HEIGHT, GAME_WIDTH, PLATFORMS } from "../shared/common";
 
 const GRAVITY = 200;
@@ -51,11 +51,7 @@ export class Impl implements Methods<InternalState> {
     const playerBody = state.physics.add.body(0, 0, PLAYER_WIDTH, PLAYER_HEIGHT);
     playerBody.setCollideWorldBounds(true, undefined, undefined, undefined);
     playerBody.pushable = false;
-    state.players.push({
-      id: userId,
-      body: playerBody,
-      direction: { horizontal: XDirection.NONE, vertical: YDirection.NONE },
-    });
+    state.players.push({ id: userId, body: playerBody, direction: Direction.default() });
 
     // set up colliders with other players and platforms
     state.players.forEach((player) => state.physics.add.collider(playerBody, player.body));
@@ -67,7 +63,7 @@ export class Impl implements Methods<InternalState> {
     if (player === undefined) {
       return Response.error("Not joined");
     }
-    player.direction = request;
+    player.direction = request.direction;
     return Response.ok();
   }
   getUserState(state: InternalState, userId: UserId): GameState {
@@ -76,10 +72,11 @@ export class Impl implements Methods<InternalState> {
         const [xVelocity, yVelocity] = [player.body.velocity.x, player.body.velocity.y];
         return {
           id: player.id,
-          x: player.body.x,
-          y: player.body.y,
-          xDirection: xVelocity < 0 ? XDirection.LEFT : xVelocity > 0 ? XDirection.RIGHT : XDirection.NONE,
-          yDirection: yVelocity < 0 ? YDirection.UP : yVelocity > 0 ? YDirection.DOWN : YDirection.NONE,
+          position: { x: player.body.x, y: player.body.y },
+          direction: {
+            horizontal: xVelocity < 0 ? XDirection.LEFT : xVelocity > 0 ? XDirection.RIGHT : XDirection.NONE,
+            vertical: yVelocity < 0 ? YDirection.UP : yVelocity > 0 ? YDirection.DOWN : YDirection.NONE,
+          },
         };
       }),
     };
