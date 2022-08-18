@@ -69,18 +69,12 @@ export class GameScene extends Phaser.Scene {
       frames: [{ key: "player", frame: 24 }],
     });
 
-    // input handling
+    // keyboard input
     const keys = this.input.keyboard.createCursorKeys();
-    let prevInputs = Direction.default();
     const handleKeyEvt = () => {
-      const inputs: Direction = {
-        horizontal: keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE,
-        vertical: keys.up.isDown ? YDirection.UP : YDirection.NONE,
-      };
-      if (JSON.stringify(inputs) !== JSON.stringify(prevInputs)) {
-        this.connection.setDirection({ direction: inputs });
-        prevInputs = inputs;
-      }
+      const horizontal = keys.left.isDown ? XDirection.LEFT : keys.right.isDown ? XDirection.RIGHT : XDirection.NONE;
+      const vertical = keys.up.isDown ? YDirection.UP : YDirection.NONE;
+      this.connection.setDirection({ direction: { horizontal, vertical } });
     };
     this.input.keyboard.on("keydown", handleKeyEvt);
     this.input.keyboard.on("keyup", handleKeyEvt);
