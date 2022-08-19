@@ -8,7 +8,7 @@ Step-by-step tutorial on how to build this game: https://docs.hathora.dev/#/tuto
 
 Assets from https://pixelfrog-assets.itch.io/pixel-adventure-1
 
-Try it at https://platformer-tutorial.surge.sh/
+Try it at https://platformer-tutorial.netlify.app/
 
 ### Instructions:
 
