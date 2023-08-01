@@ -4,7 +4,7 @@
 
 Built using [Hathora](https://github.com/hathora/hathora) and [Phaser](http://phaser.io/)
 
-Step-by-step tutorial on how to build this game: https://docs.hathora.dev/#/tutorial_platformer
+Step-by-step tutorial on how to build this game: https://docs.hathora.dev/#/builder/tutorial_platformer
 
 Assets from https://pixelfrog-assets.itch.io/pixel-adventure-1
 
